@@ -29,27 +29,25 @@ end
 class HallClient
 
   def self.post group_api_key, title, body, picture
+    Thread.start {
+      mes = Message.new title, body, picture
+      puts mes.to_json
+      uri = URI.parse "https://hall.com/api/1/services/generic/#{group_api_key}"
 
-    mes = Message.new title, body, picture
+      req = Net::HTTP::Post.new uri.request_uri, initheader = {'Content-Type' =>'application/json'}
+      req.body = mes.to_json
 
-    puts mes.to_json
+      http = Net::HTTP.new uri.host, uri.port
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
-    url = "https://hall.com/api/1/services/generic/#{group_api_key}"
+      http.set_debug_output $stderr
 
-    uri = URI.parse url
-    req = Net::HTTP::Post.new uri.request_uri, initheader = {'Content-Type' =>'application/json'}
-    req.body = mes.to_json
-
-    http = Net::HTTP.new uri.host, uri.port
-    http.use_ssl = true
-    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-
-    http.set_debug_output $stderr
-
-    http.start do |h|
-      res = h.request req
-      p res
-    end
+      http.start do |h|
+        res = h.request req
+        p res
+      end
+    }
   end
 end
 
