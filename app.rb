@@ -75,7 +75,6 @@ post '/post' do
       return '' unless group_api_key
 
       # Post
-      # TODO: Async
       HallClient.post group_api_key, title, body, picture
 
       return ''
