@@ -31,7 +31,6 @@ class HallClient
   def self.post group_api_key, title, body, picture
     Thread.start {
       mes = Message.new title, body, picture
-      puts mes.to_json
       uri = URI.parse "https://hall.com/api/1/services/generic/#{group_api_key}"
 
       req = Net::HTTP::Post.new uri.request_uri, initheader = {'Content-Type' =>'application/json'}
@@ -74,12 +73,9 @@ post '/post' do
     body    = text
     picture = icon
 
-    group_api_key = ENV["ROOM_#{room_id}"]
+    group_api_key = ENV["ROOM_#{room_id.upcase}"]
 
-    unless group_api_key
-      puts 'No room found'
-      return ''
-    end
+    return '' unless group_api_key
 
     # Post
     HallClient.post group_api_key, title, body, picture
