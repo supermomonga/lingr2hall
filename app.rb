@@ -2,8 +2,9 @@
 
 require 'bundler'
 Bundler.require
-
+require 'sinatra/reloader' if development?
 require 'net/http'
+require 'json'
 
 
 class Message
@@ -15,7 +16,6 @@ class Message
   end
 
   def to_json
-    require 'json'
     {
       title: @title,
       message: @message,
@@ -57,28 +57,34 @@ get '/' do
 end
 
 post '/post' do
-  data = JSON.parse(request.body.read)
+  body = request.body.read
+  return '' unless body
+  return '' if body == ''
+  data = JSON.parse body
+  p data
   data['events'].map do |event|
-    event['message'].map do |message|
-      room_id = message['room']
-      text    = message['text']
-      icon    = message['icon_url']
-      speaker = message['nickname']
+    message = event['message']
+    room_id = message['room']
+    text    = message['text']
+    icon    = message['icon_url']
+    speaker = message['nickname']
 
-      # Prepare
-      title   = "#{speaker} (at Lingr)"
-      body    = text
-      picture = icon
+    # Prepare
+    title   = "#{speaker} (at Lingr)"
+    body    = text
+    picture = icon
 
-      group_api_key = ENV["ROOM_#{room_id}"]
+    group_api_key = ENV["ROOM_#{room_id}"]
 
-      return '' unless group_api_key
-
-      # Post
-      HallClient.post group_api_key, title, body, picture
-
+    unless group_api_key
+      puts 'No room found'
       return ''
     end
+
+    # Post
+    HallClient.post group_api_key, title, body, picture
+
+    return ''
   end
 end
 
